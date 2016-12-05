@@ -1,29 +1,31 @@
 package pp4;
 
 import java.util.List;
+import java.util.Set;
 
 public class Indices {
-	private List<String> wn;
-	private List<String> dn;
+	private List<Integer> wn;
+	private List<Integer> dn;
 	private List<Integer> zn;
 	private int n;
 	
-	public Indices(List<String> wn, List<String> dn, List<Integer> zn, int n) {
+	public Indices(List<Integer> wn, List<Integer> dn, List<Integer> zn, int n) {
 		this.wn = wn;
 		this.dn = dn;
 		this.zn = zn;
 		this.n = n;
 	}
-	public List<String> getWn() {
+
+	public List<Integer> getWn() {
 		return wn;
 	}
-	public void setWn(List<String> wn) {
+	public void setWn(List<Integer> wn) {
 		this.wn = wn;
 	}
-	public List<String> getDn() {
+	public List<Integer> getDn() {
 		return dn;
 	}
-	public void setDn(List<String> dn) {
+	public void setDn(List<Integer> dn) {
 		this.dn = dn;
 	}
 	public List<Integer> getZn() {
