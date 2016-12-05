@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 public class LDA {
 	/**
@@ -39,7 +40,16 @@ public class LDA {
 		return words;
 	}
 	
-	public static Indices formCorpus(String path) throws IOException {
+	public static int randomAssignTopic (int k) {
+		int min = 1;
+		int max = k;
+
+		Random r = new Random();
+		int random_topic = r.nextInt(max - min + 1) + min;
+		return random_topic;
+	}
+	
+	public static Indices formCorpus(String path, int k) throws IOException {
 		File folder = new File(path);
 		File[] list_of_files = folder.listFiles();
 		List<String> wn = new ArrayList<String>();
@@ -53,7 +63,10 @@ public class LDA {
 					List<String> wn_i = readData(path + filename);
 					int file_size = wn_i.size();
 					List<String> dn_i = Collections.nCopies(file_size, filename);
-					List<Integer> zn_i = Collections.nCopies(file_size, 1);
+					List<Integer> zn_i = new ArrayList<Integer>();
+					for (int j = 0; j < file_size; j++) {
+						zn_i.add(randomAssignTopic(k));
+					}
 					wn.addAll(wn_i);
 					dn.addAll(dn_i);
 					zn.addAll(zn_i);
@@ -70,15 +83,19 @@ public class LDA {
 		// TODO Auto-generated method stub
 		List<String> words = LDA.readData("data/haha");
 		List<String> words2 = LDA.readData("data/haha2");
+		int k = 2;
 //		List<String> totalWords = new ArrayList<String> ();
 //		totalWords.addAll(words);
 //		totalWords.addAll(words2);
-		Indices test = LDA.formCorpus("data/");
-		List<Integer> totalWords = test.getZn();
+		Indices test = LDA.formCorpus("data/artificial/", k);
+		List<String> totalWords = test.getWn();
+		List<String> dn = test.getDn();
+		List<Integer> zn = test.getZn();
 		for (int i = 0; i < totalWords.size(); i++) {
-			System.out.println(i + " : " + totalWords.get(i));
+			System.out.println(i + " : " + totalWords.get(i) + " : " + dn.get(i) + " : " + zn.get(i));
 		}
 		System.out.println(Arrays.toString(totalWords.toArray()));
+
 
 	}
 
