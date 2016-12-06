@@ -8,12 +8,14 @@ public class Indices {
 	private List<Integer> dn;
 	private List<Integer> zn;
 	private int n;
+	private List<String> vocabulary;
 	
-	public Indices(List<Integer> wn, List<Integer> dn, List<Integer> zn, int n) {
+	public Indices(List<Integer> wn, List<Integer> dn, List<Integer> zn, int n, List<String> vocabulary) {
 		this.wn = wn;
 		this.dn = dn;
 		this.zn = zn;
 		this.n = n;
+		this.vocabulary = vocabulary;
 	}
 
 	public List<Integer> getWn() {
@@ -40,6 +42,14 @@ public class Indices {
 	}
 	public void setN(int n) {
 		this.n = n;
+	}
+
+	public List<String> getVocabulary() {
+		return vocabulary;
+	}
+
+	public void setVocabulary(List<String> vocabulary) {
+		this.vocabulary = vocabulary;
 	}	
 	
 }
