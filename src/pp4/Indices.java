@@ -1,8 +1,12 @@
 package pp4;
 
 import java.util.List;
-import java.util.Set;
 
+/**
+ * the class for holding Indice of the given docs
+ * @author Zhaokun Xue
+ *
+ */
 public class Indices {
 	private List<Integer> wn;
 	private List<Integer> dn;
@@ -10,6 +14,14 @@ public class Indices {
 	private int n;
 	private List<String> vocabulary;
 	
+	/**
+	 * Constructor
+	 * @param wn words indices
+	 * @param dn doc indices
+	 * @param zn topics indices
+	 * @param n the number of words in given docs 
+	 * @param vocabulary the vocabulary of docs
+	 */
 	public Indices(List<Integer> wn, List<Integer> dn, List<Integer> zn, int n, List<String> vocabulary) {
 		this.wn = wn;
 		this.dn = dn;
@@ -18,6 +30,10 @@ public class Indices {
 		this.vocabulary = vocabulary;
 	}
 
+	/**
+	 * getters and setters
+	 * 
+	 */
 	public List<Integer> getWn() {
 		return wn;
 	}

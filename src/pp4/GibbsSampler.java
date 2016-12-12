@@ -1,27 +1,39 @@
 package pp4;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import Jama.Matrix;
 
+/**
+ * class to implement gibb sampler method
+ * @author Zhaokun Xue
+ *
+ */
 public class GibbsSampler {
 	private Indices corpus_params;
 	private int k;
 
-	
+	/**
+	 * constructor
+	 * @param corpus_params corpus for docs
+	 * @param k number of topics
+	 */
 	public GibbsSampler (Indices corpus_params, int k) {
 		this.corpus_params = corpus_params;
 		this.k = k;
 	}
 
+	/**
+	 * implement the algorithm 
+	 * @param n_iters number of iterations
+	 * @return result from gibbs sampler
+	 */
 	public GibbsResults implementAlgorithm(int n_iters) {
 		double alpha = 50/(double)k;
 		double beta = 0.1;
@@ -34,9 +46,7 @@ public class GibbsSampler {
 			pi_n.add(m);
 		}
 		Set<Integer> vocabulary = new HashSet<Integer>(wn);
-		Set<Integer> docs = new HashSet<Integer>(dn);
 		int v = vocabulary.size();
-		double d = docs.size();
 		Matrix alpha1s = new Matrix(k+1, 1).transpose(); // K*1
 		alpha1s.times(alpha);
 		Matrix beta1s = new Matrix (v, 1).transpose(); // V*1
@@ -70,12 +80,13 @@ public class GibbsSampler {
 		}
 		
 		GibbsResults gr = new GibbsResults(zn, cd, ct);
-//		System.out.println("--------");
-//		System.out.println(Arrays.deepToString(p.getArray()));
-//		System.out.println("--------");
 		return gr;
 	}
 	
+	/**
+	 * initialize cd
+	 * @return cd
+	 */
 	public Matrix initializeCd() {
 
 		List<Integer> dn = corpus_params.getDn();
@@ -92,6 +103,10 @@ public class GibbsSampler {
 		return cd;
 	}
 	
+	/**
+	 * initialize ct
+	 * @return ct
+	 */
 	public Matrix initializeCt() {
 		List<Integer> zn = corpus_params.getZn();
 		List<Integer> wn = corpus_params.getWn();
@@ -107,6 +122,12 @@ public class GibbsSampler {
 		return ct;
 	}
 	
+	/**
+	 * calculate the summation of row in ct
+	 * @param k number of topics
+	 * @param ct
+	 * @return the sum of row
+	 */
 	public double calcCtRowJSum(int k, Matrix ct) {
 		int ct_column = ct.getColumnDimension();
 		double ct_row_j_sum = 0;
@@ -116,7 +137,15 @@ public class GibbsSampler {
 		return ct_row_j_sum;
 	}
 	
-	
+	/**
+	 * calculate the probablities
+	 * @param doc number of docs
+	 * @param word number of words
+	 * @param v number of words in vocabulary
+	 * @param cd 
+	 * @param ct
+	 * @return the probabliies result
+	 */
 	public Matrix calculateP(int doc, int word, int v, Matrix cd, Matrix ct) {
 		double alpha = 50/(double)k;
 		double beta = 0.1;
@@ -135,9 +164,13 @@ public class GibbsSampler {
 			p.set(0, i, p_k);
 		}
 		return p;
-		
 	}
 	
+	/**
+	 * normalize p
+	 * @param p p matrix
+	 * @return the normalized p
+	 */
 	public Matrix normalizeP(Matrix p) {
 		double denominator = 0;
 		int p_column = p.getColumnDimension();
@@ -151,6 +184,11 @@ public class GibbsSampler {
 		return p;
 	}
 	
+	/**
+	 * sample from p
+	 * @param p matrix of p
+	 * @return return the predict topic
+	 */
 	public int sampleFromP(Matrix p) {
 		HashMap<Integer, double[]> topic_intervals = new HashMap<Integer, double[]>();
 		double lower = 0;
@@ -176,25 +214,34 @@ public class GibbsSampler {
 		return topic;
 	}
 	
+	/**
+	 * for the topic representation matrix
+	 * @param cd
+	 * @return the matrix for topic representation matrix
+	 */
 	public Matrix formDocTopicRepresentation(Matrix cd) {
 		int row = cd.getRowDimension();
 		int column = cd.getColumnDimension();
 		double alpha = 50/(double)k;
-		Matrix output = new Matrix(row, column);
-		double cd_row_l_sum = 0;
-		
+		Matrix output = new Matrix(row - 1, column - 1);
+				
 		for (int doc = 1; doc < row; doc++) {
+			double cd_row_l_sum = 0; 
 			for (int l = 0; l < column; l++) {
 				cd_row_l_sum += cd.get(doc, l);
 			}
 			for (int topic = 1; topic < column; topic++) {
 				double temp = (cd.get(doc, topic) + alpha) / ((double) k * alpha + cd_row_l_sum);
-				output.set(doc, topic, temp);
+				output.set(doc-1, topic-1, temp);
 			}
 		}
 		return output;
 	}
 	
+	/**
+	 * 
+	 * getters and setters
+	 */
 	public Indices getCorpus_params() {
 		return corpus_params;
 	}

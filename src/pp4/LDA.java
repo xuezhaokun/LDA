@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,8 +14,15 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
+
 import Jama.Matrix;
 
+/**
+ * class to implement LDA method
+ * @author Zhaokun Xue
+ *
+ */
 public class LDA {
 	/**
 	 * The function parses an input file to a list of strings
@@ -44,6 +52,44 @@ public class LDA {
 		return words;
 	}
 	
+	
+	/**
+	 * The function to read label file
+	 * @param filename label file name
+	 * @return an array contains all labels
+	 * @throws IOException
+	 */
+	public static double[] readLabels(String filename) throws IOException {
+
+        List<Double> labels = new ArrayList<Double>();
+        double[] t = null;
+		// try to open and read the file
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(filename));
+            String fileRead = br.readLine();
+            // parse file content by space and add each token to the list
+            while (fileRead != null) {
+            		String[] tokens = fileRead.split(",");
+            		labels.add(Double.parseDouble(tokens[1]));
+                fileRead = br.readLine();
+            }
+            t = new double[labels.size()];
+            for (int i = 0; i < t.length; i++) {
+                t[i] = labels.get(i);
+             }
+            br.close();
+            
+        } catch (FileNotFoundException fnfe) {
+            System.err.println("file not found");
+        }
+		return t;
+	}
+	
+	/**
+	 * randomly assign topic to doc
+	 * @param k number of topics
+	 * @return a random topic
+	 */
 	public static int randomAssignTopic (int k) {
 		int min = 1;
 		int max = k;
@@ -53,6 +99,13 @@ public class LDA {
 		return random_topic;
 	}
 	
+	/**
+	 * Build the indices for the given input
+	 * @param path the file path
+	 * @param k number of topics
+	 * @return the Indices built from give docs
+	 * @throws IOException
+	 */
 	public static Indices formCorpus(String path, int k) throws IOException {
 		File folder = new File(path);
 		File[] list_of_files = folder.listFiles();
@@ -84,17 +137,22 @@ public class LDA {
 		Set<String> sorted_vocabulary = new TreeSet<String>(vocabulary);
 		List<String> vocabulary_list = new ArrayList<String>(sorted_vocabulary);
 
-		//System.out.println(Arrays.toString(vocabulary_list.toArray()));
 		for (int j = 0; j < n; j++) {
 			String word = words.get(j);
 			int index = vocabulary_list.indexOf(word);
-			//System.out.println(word + " > " + index);
 			wn.add(index);
 		}
 		Indices corpus_instance = new Indices(wn, dn, zn, n, vocabulary_list);
 		return corpus_instance;
 	}
 	
+	/**
+	 * Find the most frequency words based of the LDA results
+	 * @param m the number of most frequency words
+	 * @param ct the C_t matrix
+	 * @param vocabulary vocabulary of given docs
+	 * @return return most frequencey words for each topic
+	 */
 	public static List<List<String>> findTheNLargest(int m, Matrix ct, List<String> vocabulary) {
 	    int row = ct.getRowDimension(); 
 	    int column = ct.getColumnDimension();
@@ -123,43 +181,73 @@ public class LDA {
 	    return nLargest_words;
 	}
 	
-	public static void main(String[] args) throws IOException {
-		// TODO Auto-generated method stub
-		//List<String> words = LDA.readData("data/haha");
-		//List<String> words2 = LDA.readData("data/haha2");
-		int k = 20;
-//		List<String> totalWords = new ArrayList<String> ();
-//		totalWords.addAll(words);
-//		totalWords.addAll(words2);
-		Indices test = LDA.formCorpus("data/newsgroups/", k);
-		List<Integer> wn = test.getWn();
-		List<Integer> dn = test.getDn();
-		List<Integer> zn = test.getZn();
-//		for (int i = 0; i < wn.size(); i++) {
-//			System.out.println(i + " : " + wn.get(i) + " : " + dn.get(i) + " : " + zn.get(i));
-//		}
-		//System.out.println(Arrays.toString(wn.toArray()));
-		System.out.println("total words: " + test.getN());
-
-		Set<Integer> docs = new HashSet<Integer>(dn);
-		System.out.println("# of docs: " + docs.size());
-		System.out.println("********************");
-		GibbsSampler gs = new GibbsSampler(test, k);
-		//Matrix cd = gs.initializeCd(2);
-		//Matrix ct = gs.initializeCt(2);
-		GibbsResults gr = gs.implementAlgorithm(500);
-		Matrix topicRepresentation = gs.formDocTopicRepresentation(gr.getCd());
-		System.out.println(Arrays.deepToString(topicRepresentation.getArray()));
-		List<List<String>> l = LDA.findTheNLargest(5, gr.getCt(), test.getVocabulary());
-
-		System.out.println("++++++++++++++++++");
-		for(int i = 0; i < l.size(); i++) {
-			System.out.println(Arrays.toString(l.get(i).toArray()));
+	/**
+	 * Build the bag of words input
+	 * @param corpus_params the corpus for the given docs
+	 * @return a matrix fog bag of words input
+	 */
+	public static Matrix formBagOfWords(Indices corpus_params) {
+		List<String> vocabulary = corpus_params.getVocabulary();
+		List<Integer> wn = corpus_params.getWn();
+		List<Integer> dn = corpus_params.getDn();
+		Set<Integer> dn_set = new HashSet<Integer>(dn);
+		int column = vocabulary.size();
+		int row = dn_set.size() + 1;
+		Matrix bag_of_words = new Matrix (row-1, column);
+		
+		for (int doc : dn_set) {
+			double total_words_doc = Collections.frequency(dn, doc);
+			for (int i = 0; i < dn.size(); i++) {
+				if (dn.get(i) == doc) {
+					int word = wn.get(i);
+					double update = bag_of_words.get(doc-1, word) + 1;
+					bag_of_words.set(doc-1, word, update);
+				}
+			}
+			for (int j = 0; j < column; j++) {
+				double counter = bag_of_words.get(doc-1, j);
+				double freq = counter / total_words_doc;
+				bag_of_words.set(doc-1, j, freq);
+			}
 		}
-//		double[][] vals = {{1.,2.,3},{4.,5.,6.},{7.,8.,10.}};
-//		Matrix a = new Matrix(vals);
-//		System.out.println(a.get(0, 0));
-//		[bank, dollars, loan, river, water]
+		
+		return bag_of_words;
+	}
+	
+	/**
+	 * main method for project 4
+	 * @param args
+	 * @throws Exception
+	 */
+	public static void main(String[] args) throws Exception {
+		int k = 20;
+		Indices test = LDA.formCorpus("data/newsgroups/", k);
+		String task1_output = "topicwords.csv";
+		System.out.println("****** Task 1 topic words ******");
+		GibbsSampler gs = new GibbsSampler(test, k);
+		GibbsResults gr = gs.implementAlgorithm(500);
+		Matrix topic_representation = gs.formDocTopicRepresentation(gr.getCd());
+		List<List<String>> topics_results = LDA.findTheNLargest(5, gr.getCt(), test.getVocabulary());
+		PrintWriter writer  = new PrintWriter(task1_output, "UTF-8");
+
+		for(int i = 0; i < topics_results.size(); i++) {
+			System.out.print("Topic " + (i + 1) + ": ");
+		    String collect = topics_results.get(i).stream().collect(Collectors.joining(","));
+		    System.out.println(collect);
+		    writer.println(collect);
+		}
+
+	    writer.close();
+	    System.out.println("****** Task 2 Results *****");
+		Matrix bow = LDA.formBagOfWords(test);
+		double[] labels = LDA.readLabels("data/newsgroups/index.csv");
+		String topic_method = "topic-representation";
+		String bow_method = "bow";
+		System.out.println(">>>>> Results to Topic Represenations <<<<<");
+		Task2.runTask2(topic_representation, labels, topic_method);
+		System.out.println(">>>>>> Results to Bag-of-wrods <<<<<<");
+		Task2.runTask2(bow, labels, bow_method);
+		
 	}
 
 }

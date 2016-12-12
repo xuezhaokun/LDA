@@ -1,0 +1,24 @@
+** It takes about 5 - 15 minutes to finish running the whole project **
+how to run:
+
+1. extract the .zip file 
+	unzip pp4.zip
+
+
+2. cd to the project directory
+	cd LDA/
+
+
+3. run the .jar file
+	java -jar pp4.jar
+
+
+If you need to look at the code, just cd to the code directory 
+	cd src/pp4
+
+The results for task 1 are stored in file topicwords.csv
+
+If you need to check the raw data I got from the task 2, just cd to the results directory
+	cd results
+
+The files in results have the same form as the results given in console
